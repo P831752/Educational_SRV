@@ -1,0 +1,66 @@
+_schema-version: 3.3.0
+ID: Educational_SRV
+description: A simple CAP project.
+version: 1.0.0
+modules:
+  - name: Educational_SRV-srv
+    type: nodejs
+    path: gen/srv
+    requires:
+      - name: Educational_SRV-auth
+      - name: Educational_SRV-db
+      - name: Educational_SRV-connectivity
+      - name: Educational_SRV-destination
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    parameters:
+      buildpack: nodejs_buildpack
+      instances: 1
+    build-parameters:
+      builder: npm-ci
+  - name: Educational_SRV-db-deployer
+    type: hdb
+    path: gen/db
+    requires:
+      - name: Educational_SRV-db
+        properties:
+          TARGET_CONTAINER: ~{hdi-container-name}
+    parameters:
+      buildpack: nodejs_buildpack
+resources:
+  - name: Educational_SRV-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        tenant-mode: dedicated
+        xsappname: Educational_SRV-${space}
+      path: ./xs-security.json
+      service: xsuaa
+      service-plan: application
+  - name: Educational_SRV-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+    properties:
+      hdi-container-name: ${service-name}
+  - name: Educational_SRV-connectivity
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: connectivity
+      service-plan: lite
+  - name: Educational_SRV-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: destination
+      service-plan: lite
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production

@@ -1,0 +1,21 @@
+### metadata
+GET http://localhost:4004/odata/v4/educational/$metadata
+
+### metadata
+GET http://localhost:4004/odata/v4/educational/Educational_Details
+
+### metadata
+PUT http://localhost:4004/odata/v4/educational/Educational_Details('93507a59-ac00-4d3b-84a7-e2f465abd583')
+Content-Type: application/json
+
+{
+"PSID":"111111","course":"SSC6","qualificationSubType":"SSC6","educationCertificate":"10","branch1":"","branch2":"","yearOfPassing":2000,"institution":"ABC","boardOrUniversity":"","courseType":"","duration":"","percentage":"8.2","cgpa":"7.2","division":"","grade":"","status":"D","dmsfoldername":"Y","ismodified":"Y"
+}
+
+### metadata
+POST http://localhost:4004/odata/v4/educational/Educational_Details
+Content-Type: application/json
+
+{
+"PSID":"333333","course":"SSC6","qualificationSubType":"SSC6","educationCertificate":"10","branch1":"","branch2":"","yearOfPassing":2000,"institution":"ABC","boardOrUniversity":"","courseType":"","duration":"","percentage":"8.2","cgpa":"7.2","division":"","grade":"","status":"D","dmsfoldername":"Y","ismodified":"Y"
+}
