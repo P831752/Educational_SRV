@@ -2,13 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "command": "cds watch --profile hybrid",
-      "name": "cds watch",
-      "request": "launch",
-      "type": "node-terminal"
-    },
-    {
-      "name": "cds serve",
+      "name": "cds watch --profile hybrid",
       "request": "launch",
       "type": "node",
       "cwd": "${workspaceFolder}",
