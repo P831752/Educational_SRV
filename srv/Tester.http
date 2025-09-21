@@ -7,20 +7,30 @@ Content-Type: application/json
 }
 
 ### metadata
+POST http://localhost:4004/odata/v4/educational/sendEmail1
+Content-Type: application/json
+
+{
+  "input": {
+    "to": "Palagulla.Ramireddy@ltimindtree.com,Palagulla.Ramireddy@ltimindtree.com"
+  }
+}
+
+### metadata
 POST http://localhost:4004/odata/v4/educational/sendEmail
 Content-Type: application/json
 
 {
-"to":"palagulla.ramireddy@ltimindtree.com",
-"subject":"text",
-"body":"text body"
+  "to": "Palagulla.Ramireddy@ltimindtree.com,Palagulla.Ramireddy@ltimindtree.com",
+  "subject": "Approval Required: Educational Details Submission",
+  "html":"This is a plain text message"
 }
 
 ### metadata
 GET http://localhost:4004/odata/v4/educational/$metadata
 
 ### metadata
-GET http://localhost:4004/odata/v4/educational/Educational_Details
+GET http://localhost:4004/odata/v4/educational/Educational_Details/$count
 
 ### metadata
 GET http://localhost:4004/odata/v4/educational/SH_Institutes/$count
@@ -30,7 +40,7 @@ POST http://localhost:4004/odata/v4/educational/SH_InstitutesHANA
 Content-Type: application/json
 
 {
-
+"externalCode":"IT43539"
 }
 
 ### metadata
