@@ -7,6 +7,50 @@ Content-Type: application/json
 }
 
 ### metadata
+POST http://localhost:4004/odata/v4/educational/updateSFData
+Content-Type: application/json
+
+ {
+  "data": [
+    {
+      "psid": "20312917",
+      "ParentLegacy_effectiveStartDate": "2020-08-17T00:00:00.000Z",
+      "externalCode": "13291320",
+      "cust_Qualification_Type": "Q03",
+      "Qualification_Type_Desc": "1. Secondary School Certificate (Std X and Less)",
+      "cust_Duration_Of_The_Course": "12",
+      "cust_Institute": null,
+      "cust_Percentage": "57",
+      "Percentage_Desc": "96",
+      "cust_University": "UT10553",
+      "University_Desc": "A.I.C.T.E Delhi"
+    },
+    {
+      "psid": "20312918",
+      "ParentLegacy_effectiveStartDate": "2020-08-17T00:00:00.000Z",
+      "externalCode": "13291322",
+      "cust_Qualification_Type": "Q02",
+      "Qualification_Type_Desc": "1. Secondary School Certificate (Std X and Less)",
+      "cust_Duration_Of_The_Course": "12",
+      "cust_Institute": null,
+      "cust_Percentage": "96",
+      "Percentage_Desc": "96",
+      "cust_University": "UT10553",
+      "University_Desc": "A.I.C.T.E Delhi"
+    }
+  ]
+}
+
+### metadata
+POST http://localhost:4004/odata/v4/educational/getUniformStatusPsid
+Content-Type: application/json
+
+{
+"ichr":"999999",
+"status":"D"
+}
+
+### metadata
 POST http://localhost:4004/odata/v4/educational/sendEmail1
 Content-Type: application/json
 
@@ -21,7 +65,8 @@ POST http://localhost:4004/odata/v4/educational/sendEmail
 Content-Type: application/json
 
 {
-  "to": "Palagulla.Ramireddy@ltimindtree.com,Palagulla.Ramireddy@ltimindtree.com",
+  "to": "Palagulla.Ramireddy@ltimindtree.com",
+  "cc": "Palagulla.Ramireddy@ltimindtree.com",
   "subject": "Approval Required: Educational Details Submission",
   "html":"This is a plain text message"
 }
@@ -44,6 +89,14 @@ Content-Type: application/json
 }
 
 ### metadata
+DELETE http://localhost:4004/odata/v4/educational/Educational_Details('6bb9296b-5eae-4860-956e-5e48492d832b')
+Content-Type: application/json
+
+{
+
+}
+
+### metadata
 GET http://localhost:4004/odata/v4/educational/Educational_Details?$filter=psid eq '10012553'
 
 ### metadata
@@ -61,3 +114,37 @@ Content-Type: application/json
 {
 "PSID":"333333","course":"SSC6","qualificationSubType":"SSC6","educationCertificate":"10","branch1":"","branch2":"","yearOfPassing":2000,"institution":"ABC","boardOrUniversity":"","courseType":"","duration":"","percentage":"8.2","cgpa":"7.2","division":"","grade":"","status":"D","dmsfoldername":"Y","ismodified":"Y"
 }
+
+### metadata
+POST http://localhost:4004/odata/v4/educational/getAllUniformStatusCounts
+Content-Type: application/json
+
+{
+"ichr":"999999"
+}
+
+### metadata
+POST http://localhost:4004/odata/v4/educational/getUniformStatusPsids
+Content-Type: application/json
+
+{
+"ichr":"999999",
+"status":"PA"
+}
+
+### Get SFData Table Count
+POST http://localhost:4004/odata/v4/educational/getSFDataCount
+Content-Type: application/json
+
+{
+
+}
+
+### Get SFData Table Count
+POST http://localhost:4004/odata/v4/educational/sendEmail123
+Content-Type: application/json
+
+{
+
+}
+

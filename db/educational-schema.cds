@@ -50,6 +50,7 @@ entity Educational_Details : cuid, managed {
 
 //only create operation
 entity Educational_History : cuid, managed {
+      edu_details_key:String(100);
       psid:String(20);
       name:String(150);
       comments:String(1000);
