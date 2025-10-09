@@ -83,6 +83,7 @@ module.exports = cds.service.impl(async function () {
       newfilename: data.newfilename,
       status: data.status,
       isnewcourse: data.isnewcourse,
+      isfirstentry: data.isfirstentry,
       email: data.email,
       modifiedfields: data.modifiedfields,
       edu_details_key: data.ID,
@@ -141,6 +142,7 @@ module.exports = cds.service.impl(async function () {
       newfilename: data.newfilename,
       status: data.status,
       isnewcourse: data.isnewcourse,
+      isfirstentry: data.isfirstentry,
       email: data.email,
       modifiedfields: data.modifiedfields,
       edu_details_key: data.ID,
@@ -538,6 +540,7 @@ module.exports = cds.service.impl(async function () {
         newfilename: '',
         status: 'SA',
         isnewcourse: '',
+        isfirstentry: '',
         modifiedfields: '',
       }));
 

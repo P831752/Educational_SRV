@@ -8,12 +8,13 @@ entity SH_Institutes {
 entity Educational_Details : cuid, managed {
       psid:String(20);
       name:String(150);
-      comments:String(1000);
+      comments:Array of String;
       ic:String(100);
       ichr:String(150);
       newfilename:String(20);
       status:String(20);
       isnewcourse:String(10);
+      isfirstentry:String(10);
       email:String(100);
       modifiedfields:String(2000);
       cust_Qualification_Type:String(100);
@@ -53,12 +54,13 @@ entity Educational_History : cuid, managed {
       edu_details_key:String(100);
       psid:String(20);
       name:String(150);
-      comments:String(1000);
+      comments:Array of String;
       ic:String(100);
       ichr:String(150);
       newfilename:String(20);
       status:String(20);
       isnewcourse:String(10);
+      isfirstentry:String(10);
       email:String(100);
       modifiedfields:String(2000);
       cust_Qualification_Type:String(100);
