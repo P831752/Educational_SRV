@@ -32,7 +32,7 @@ entity Educational_Details : cuid, managed {
       cust_Division:String(20);
       Division_Desc:String(20);
       cust_Type_Of_The_Course:String(20);
-      Type_Of_The_Course_Desc:String(20);
+      Type_Of_The_Course_Desc:String(100);
       cust_Grade:String(20);
       Grade_Desc:String(20);
       cust_Qualification_Sub_Type:String(100);
@@ -78,7 +78,7 @@ entity Educational_History : cuid, managed {
       cust_Division:String(20);
       Division_Desc:String(20);
       cust_Type_Of_The_Course:String(20);
-      Type_Of_The_Course_Desc:String(20);
+      Type_Of_The_Course_Desc:String(100);
       cust_Grade:String(20);
       Grade_Desc:String(20);
       cust_Qualification_Sub_Type:String(100);
@@ -112,7 +112,7 @@ entity SFData : cuid, managed {
       cust_Division:String(20);
       Division_Desc:String(20);
       cust_Type_Of_The_Course:String(20);
-      Type_Of_The_Course_Desc:String(20);
+      Type_Of_The_Course_Desc:String(100);
       cust_Grade:String(20);
       Grade_Desc:String(20);
       cust_Qualification_Sub_Type:String(100);
