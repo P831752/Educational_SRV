@@ -8,7 +8,7 @@ module.exports = cds.service.impl(async function () {
 
   this.on('sendEmail', async (req) => {
     try {
-      const { to, cc, subject, text, html } = req.data;
+      const { to, cc, subject, html } = req.data;
 
       // Validate required fields
       if (!to || !subject || (!html)) {
@@ -346,7 +346,10 @@ module.exports = cds.service.impl(async function () {
       if (!ichr)
         return req.error(400, "Missing ichr");
 
-      const allRecords = await SELECT.from(Educational_Details).where({ ichr: ichr });
+      /*const allRecords = await SELECT.from(Educational_Details).where({ ichr: ichr });*/
+      const allRecords = await SELECT.from(Educational_Details)
+        .columns('psid','cust_Qualification_Type','status','name','ic','modifiedAt')
+        .where({ ichr });
       const result = processGroups(allRecords);
 
       console.log("[getAllUniformStatusCounts] =>", JSON.stringify(result, null, 2));

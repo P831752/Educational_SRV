@@ -36,7 +36,6 @@ service EducationalService {
                    to: String,
                    cc: String,
                    subject: String,
-                   text: String,
                    html: String)                             returns {
     success   : Boolean;
     messageId : String;
