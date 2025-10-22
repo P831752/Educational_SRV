@@ -9,14 +9,11 @@ module.exports = cds.service.impl(async function () {
   this.on('sendEmail', async (req) => {
     try {
       const { to, cc, subject, html } = req.data;
-
-      // Validate required fields
-      if (!to || !subject || (!html)) {
-        return {
-          success: false,
-          messageId: null,
-          error: "Missing required fields: to, subject, and either text or html body."
-        };
+ 
+      // Validate required fields — return proper 400
+      if (!to || !subject || !html) {
+        req.error(400, 'Missing required fields: to, subject and html.');
+        return; // After req.error, CAP completes the response with 400
       }
 
       /*const transporter = nodemailer.createTransport({
@@ -28,17 +25,26 @@ module.exports = cds.service.impl(async function () {
           pass: "SAP#btp2025"
         }
       });*/
-
+      
+      let transporter;
       // Create transporter using environment variables
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT),
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
-      });
+      if (process.env.SYSTEM === "PREVIEW") {
+        transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT),
+          secure: false,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+          }
+        });
+      } else {
+          transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT),
+          secure: false
+        });
+      }
 
       // Prepare mail options
       const mailOptions = {
@@ -65,7 +71,7 @@ module.exports = cds.service.impl(async function () {
       return {
         success: false,
         messageId: null,
-        error: error.message
+        error: error.message || "Unknown error while sending email"
       };
     }
   });
