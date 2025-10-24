@@ -9,7 +9,7 @@ module.exports = cds.service.impl(async function () {
   this.on('sendEmail', async (req) => {
     try {
       const { to, cc, subject, html } = req.data;
- 
+
       // Validate required fields — return proper 400
       if (!to || !subject || !html) {
         req.error(400, 'Missing required fields: to, subject and html.');
@@ -25,7 +25,7 @@ module.exports = cds.service.impl(async function () {
           pass: "SAP#btp2025"
         }
       });*/
-      
+
       let transporter;
       // Create transporter using environment variables
       if (process.env.SYSTEM === "PREVIEW") {
@@ -39,7 +39,7 @@ module.exports = cds.service.impl(async function () {
           }
         });
       } else {
-          transporter = nodemailer.createTransport({
+        transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: parseInt(process.env.SMTP_PORT),
           secure: false
@@ -354,7 +354,7 @@ module.exports = cds.service.impl(async function () {
 
       /*const allRecords = await SELECT.from(Educational_Details).where({ ichr: ichr });*/
       const allRecords = await SELECT.from(Educational_Details)
-        .columns('psid','cust_Qualification_Type','status','name','ic','modifiedAt')
+        .columns('psid', 'cust_Qualification_Type', 'status', 'name', 'ic', 'modifiedAt')
         .where({ ichr });
       const result = processGroups(allRecords);
 
@@ -385,6 +385,64 @@ module.exports = cds.service.impl(async function () {
       console.log(`[getUniformStatusPsids:${status}] =>`, JSON.stringify(grouped[status], null, 2));
 
       return grouped[status];
+
+    } catch (error) {
+      console.error("Error in getUniformStatusPsids:", error);
+      return req.error(error);
+    }
+  });
+
+  this.on("getUniformStatusPsidsNew", async req => {
+    try {
+      const { ichr, status } = req.data;
+
+      if (!ichr || !status)
+        return req.error(400, "Missing ichr or status");
+
+      const db = cds.db;
+      const table = `"COM_LT_EDUCATION_EDUCATIONAL_DETAILS"`;
+
+      // ✅ Single-join CTE-based SQL for high performance and correct grouping
+      const sql = `
+      WITH uniform AS (
+        SELECT "PSID", MIN("STATUS") AS "STATUS"
+        FROM ${table}
+        WHERE "ICHR" = ?
+        GROUP BY "PSID"
+        HAVING COUNT(DISTINCT "STATUS") = 1
+      )
+      SELECT 
+        e."PSID",
+        e."STATUS",
+        e."CUST_QUALIFICATION_TYPE",
+        e."ICHR",
+        e."NAME",
+        e."IC",
+        e."MODIFIEDAT"
+      FROM uniform u
+      JOIN ${table} e
+        ON e."PSID" = u."PSID"
+       AND e."ICHR" = ?
+       AND e."CUST_QUALIFICATION_TYPE" = 'Q01'
+       AND u."STATUS" = ?
+    `;
+
+      const rows = await db.run(sql, [ichr, ichr, status]);
+
+      // ✅ Build response object
+      const result = {
+        count: rows.length,
+        q01Records: rows.map((r) => ({
+          psid: r.PSID,
+          status: r.STATUS,
+          name: r.NAME,
+          ic: r.IC,
+          modifiedAt: r.MODIFIEDAT
+        })),
+      };
+
+      console.log(`[getUniformStatusPsids:${status}] =>`, result);
+      return result;
 
     } catch (error) {
       console.error("Error in getUniformStatusPsids:", error);
@@ -565,6 +623,135 @@ module.exports = cds.service.impl(async function () {
       return `An error occurred: ${error.message}`;
     }
   });
+
+  this.on("getInDraftPSIDs", async (req) => {
+    try {
+
+      // 1) get distinct PSIDs from Educational_Details (eduCount)
+      const eduDistinct = await SELECT.distinct.from(Educational_Details, ['psid']);
+      const eduPSIDs = eduDistinct.map(e => e.psid);
+      const eduSet = new Set(eduPSIDs);
+      const eduCount = eduPSIDs.length;
+
+      // 2) get distinct PSIDs from SFData (sfCount)
+      // Use SELECT.distinct to get unique psid values only
+      const sfDistinct = await SELECT.distinct.from(SFData, ['psid']);
+      const sfPSIDs = sfDistinct.map(s => s.psid);
+      const sfCount = sfPSIDs.length;
+
+      // 3) compute missing PSIDs: those in SFData but not in Educational_Details
+      const missingPSIDs = sfPSIDs.filter(psid => !eduSet.has(psid));
+
+      // 4) fetch minimal columns for missing PSIDs from SFData (psid + ichr)
+      // If missingPSIDs is empty, return empty array immediately
+      let inDraftRecords = [];
+      if (missingPSIDs.length > 0) {
+        // fetch rows for missing PSIDs, select only required columns
+        // CDS allows where with array: { psid: missingPSIDs }
+        const rows = await SELECT.from(SFData).columns('psid', 'modifiedAt').where({ psid: missingPSIDs });
+
+        // rows may contain multiple rows per psid (different cust_Qualification_Type etc.)
+        // you wanted one row per psid with psid & ichr — keep first occurrence per psid
+        const seen = new Set();
+        for (const r of rows) {
+          if (!seen.has(r.psid)) {
+            seen.add(r.psid);
+            inDraftRecords.push({ psid: r.psid, modifiedAt: r.modifiedAt });
+          }
+        }
+      }
+
+      const inDraftCount = inDraftRecords.length;
+
+      return {
+        success: true,
+        eduCount,
+        sfCount,
+        inDraftCount,
+        inDraftRecords
+      };
+
+    } catch (error) {
+      console.error("Error in getInDraftPSIDs:", error);
+      req.error(500, `Internal Server Error: ${error.message}`);
+    }
+  });
+
+  this.on("getAllUniformStatusCountsNew", async (req) => {
+    try {
+      const { ichr } = req.data;
+      if (!ichr) return req.error(400, "Missing ICHR value");
+
+      const db = cds.db;
+      const table = `"COM_LT_EDUCATION_EDUCATIONAL_DETAILS"`;
+
+      // 1️⃣ CTE-based SQL Query: Group + Join in one go
+
+      const sql = `
+        WITH uniform AS (
+          SELECT "PSID", MIN("STATUS") AS "STATUS"
+          FROM ${table}
+          WHERE "ICHR" = ?
+          GROUP BY "PSID"
+          HAVING COUNT(DISTINCT "STATUS") = 1
+        )
+        SELECT 
+          u."PSID", 
+          u."STATUS", 
+          e."CUST_QUALIFICATION_TYPE", 
+          e."ICHR",
+          e."NAME",
+          e."IC",
+          e."MODIFIEDAT"
+        FROM uniform u
+        LEFT JOIN ${table} e 
+          ON e."PSID" = u."PSID"
+         AND e."ICHR" = ?
+         AND e."CUST_QUALIFICATION_TYPE" = 'Q01'
+      `;
+
+      // Execute query — HANA handles all grouping + join logic
+      const rows = await db.run(sql, [ichr, ichr]);
+
+      // 2️⃣ Aggregate results in Node (minimal post-processing)
+      const result = {
+        PA: { count: 0, q01Records: [] },
+        A: { count: 0, q01Records: [] },
+        R: { count: 0, q01Records: [] },
+        D: { count: 0, q01Records: [] },
+        SA: { count: 0, q01Records: [] }
+      };
+
+      for (const row of rows) {
+        const status = row.STATUS;
+        if (result[status]) {
+          result[status].count++;
+          if (row.CUST_QUALIFICATION_TYPE === "Q01") {
+            result[status].q01Records.push({
+              psid: row.PSID,
+              status: row.STATUS,
+              name: row.NAME,
+              ic: row.IC,
+              modifiedAt: row.MODIFIEDAT
+            });
+          }
+        }
+      }
+
+      return {
+        PA: result.PA,
+        A: result.A,
+        R: result.R,
+        D: result.D,
+        SA: result.SA
+      };
+
+    } catch (error) {
+      console.error("Error in getAllUniformStatusCounts (single-join):", error);
+      return req.error(500, `Internal Server Error: ${error.message}`);
+    }
+  });
+                    
 });
 
 // using below code I am able to get each PSID group count along with one PSID record on Status

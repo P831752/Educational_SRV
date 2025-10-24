@@ -1,4 +1,12 @@
 ### metadata
+POST http://localhost:4004/odata/v4/educational/getInDraftPSIDs
+Content-Type: application/json
+
+{
+
+}
+
+### metadata
 POST http://localhost:4004/odata/v4/educational/createInDetailsTable
 Content-Type: application/json
 
@@ -116,11 +124,11 @@ Content-Type: application/json
 }
 
 ### metadata
-POST http://localhost:4004/odata/v4/educational/getAllUniformStatusCounts
+POST http://localhost:4004/odata/v4/educational/getAllUniformStatusCountsNew
 Content-Type: application/json
 
 {
-"ichr":"999999"
+"ichr":"244324"
 }
 
 ### metadata
@@ -131,6 +139,16 @@ Content-Type: application/json
 "ichr":"999999",
 "status":"PA"
 }
+
+### metadata
+POST http://localhost:4004/odata/v4/educational/getUniformStatusPsidsNew
+Content-Type: application/json
+
+{
+"ichr":"244324",
+"status":"R"
+}
+
 
 ### Get SFData Table Count
 POST http://localhost:4004/odata/v4/educational/getSFDataCount

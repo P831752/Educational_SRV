@@ -10,26 +10,43 @@ service EducationalService {
   action SH_InstitutesHANA(externalCode: String)             returns array of String;
   action createInDetailsTable(psid: String)                  returns String;
 
-  action updateSFData(data: array of SFData)              
-    returns {
-      created : Integer;
-      updated : Integer;
+  action updateSFData(data: array of SFData)                 returns {
+    created : Integer;
+    updated : Integer;
   };
- type StatusResult {
+
+  type StatusResult {
     count      : Integer;
     q01Records : many Q01Record;
   };
-    // Action returning all statuses
-  action getAllUniformStatusCounts(ichr: String) returns {
+
+  // Action returning all statuses
+  action getAllUniformStatusCountsNew(ichr: String)             returns {
+    PA : StatusResult;
+    A  : StatusResult;
+    R  : StatusResult;
+    D  : StatusResult;
+    SA  : StatusResult;
+  };
+
+  action getAllUniformStatusCounts(ichr: String)             returns {
     PA : StatusResult;
     A  : StatusResult;
     R  : StatusResult;
   };
 
-    action getUniformStatusPsids(ichr: String, status: String) returns {
+  action getUniformStatusPsids(ichr: String, status: String) returns {
     PA : StatusResult;
     A  : StatusResult;
     R  : StatusResult;
+  };
+
+    action getUniformStatusPsidsNew(ichr: String, status: String) returns {
+    PA : StatusResult;
+    A  : StatusResult;
+    R  : StatusResult;
+    D  : StatusResult;
+    SA : StatusResult;
   };
 
   action sendEmail(from: String,
@@ -41,6 +58,17 @@ service EducationalService {
     messageId : String;
     error     : String;
   };
+
+  action getInDraftPSIDs()                                   returns {
+    success        : Boolean;
+    eduCount       : Integer;
+    sfCount        : Integer;
+    inDraftCount   : Integer;
+    inDraftRecords : array of {
+      psid : String;
+      modifiedAt : String;
+    };
+  };
 }
 
 type Q01Record {
@@ -49,5 +77,3 @@ type Q01Record {
   cust_Qualification_Type : String;
   ICHR                    : String;
 }
-
-
