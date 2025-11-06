@@ -319,11 +319,11 @@ module.exports = cds.service.impl(async function () {
     });
 
     const result = {
-      PA: { count: 0, q01Records: [] },
-      A: { count: 0, q01Records: [] },
-      R: { count: 0, q01Records: [] },
-      D: { count: 0, q01Records: [] },
-      SA: { count: 0, q01Records: [] }
+      PA: { count: 0, singleRecords: [] },
+      A: { count: 0, singleRecords: [] },
+      R: { count: 0, singleRecords: [] },
+      D: { count: 0, singleRecords: [] },
+      SA: { count: 0, singleRecords: [] }
     };
 
     Object.values(psidGroups).forEach(records => {
@@ -337,7 +337,7 @@ module.exports = cds.service.impl(async function () {
 
         if (q01 && result[status]) {
           result[status].count++;
-          result[status].q01Records.push(q01);
+          result[status].singleRecords.push(q01);
         }
       }
     });
@@ -403,36 +403,38 @@ module.exports = cds.service.impl(async function () {
       const table = `"COM_LT_EDUCATION_EDUCATIONAL_DETAILS"`;
 
       // ✅ Single-join CTE-based SQL for high performance and correct grouping
-      const sql = `
+
+    const sql = `
       WITH uniform AS (
         SELECT "PSID", MIN("STATUS") AS "STATUS"
         FROM ${table}
         WHERE "ICHR" = ?
         GROUP BY "PSID"
         HAVING COUNT(DISTINCT "STATUS") = 1
+      ),
+      ranked AS (
+        SELECT 
+          e."PSID",
+          e."STATUS",
+          e."ICHR",
+          e."NAME",
+          e."IC",
+          e."MODIFIEDAT",
+          ROW_NUMBER() OVER (PARTITION BY e."PSID" ORDER BY e."MODIFIEDAT" DESC) AS rn
+        FROM uniform u
+        JOIN ${table} e
+          ON e."PSID" = u."PSID"
+         AND e."ICHR" = ?
+         AND u."STATUS" = ?
       )
-      SELECT 
-        e."PSID",
-        e."STATUS",
-        e."CUST_QUALIFICATION_TYPE",
-        e."ICHR",
-        e."NAME",
-        e."IC",
-        e."MODIFIEDAT"
-      FROM uniform u
-      JOIN ${table} e
-        ON e."PSID" = u."PSID"
-       AND e."ICHR" = ?
-       AND e."CUST_QUALIFICATION_TYPE" = 'Q01'
-       AND u."STATUS" = ?
+      SELECT * FROM ranked WHERE rn = 1
     `;
 
       const rows = await db.run(sql, [ichr, ichr, status]);
 
-      // ✅ Build response object
       const result = {
         count: rows.length,
-        q01Records: rows.map((r) => ({
+        singleRecords: rows.map((r) => ({
           psid: r.PSID,
           status: r.STATUS,
           name: r.NAME,
@@ -472,18 +474,18 @@ module.exports = cds.service.impl(async function () {
 
     const groups = groupByPsid(allRecords);
     const results = {
-      PA: { count: 0, q01Records: [] },
-      A: { count: 0, q01Records: [] },
-      R: { count: 0, q01Records: [] },
-      D: { count: 0, q01Records: [] },
-      SA: { count: 0, q01Records: [] }
+      PA: { count: 0, singleRecords: [] },
+      A: { count: 0, singleRecords: [] },
+      R: { count: 0, singleRecords: [] },
+      D: { count: 0, singleRecords: [] },
+      SA: { count: 0, singleRecords: [] }
     };
 
     for (const psid in groups) {
       const group = groups[psid];
       if (group.consistent) {
         results[group.status].count++;
-        results[group.status].q01Records.push(...group.all);
+        results[group.status].singleRecords.push(...group.all);
       }
     }
     return results;
@@ -513,9 +515,9 @@ module.exports = cds.service.impl(async function () {
 
       // Initialize result object
       const result = {
-        PA: { count: 0, q01Records: [] },
-        A: { count: 0, q01Records: [] },
-        R: { count: 0, q01Records: [] }
+        PA: { count: 0, singleRecords: [] },
+        A: { count: 0, singleRecords: [] },
+        R: { count: 0, singleRecords: [] }
       };
 
       // Process each psid group    
@@ -531,7 +533,7 @@ module.exports = cds.service.impl(async function () {
 
             const q01 = records.find(r => r.cust_Qualification_Type === "Q01");
             if (q01) {
-              result[status].q01Records.push(q01);
+              result[status].singleRecords.push(q01);
             }
           }
         }
@@ -686,55 +688,61 @@ module.exports = cds.service.impl(async function () {
       const table = `"COM_LT_EDUCATION_EDUCATIONAL_DETAILS"`;
 
       // 1️⃣ CTE-based SQL Query: Group + Join in one go
-
       const sql = `
         WITH uniform AS (
-          SELECT "PSID", MIN("STATUS") AS "STATUS"
-          FROM ${table}
-          WHERE "ICHR" = ?
+            SELECT "PSID", MIN("STATUS") AS "STATUS"
+            FROM "COM_LT_EDUCATION_EDUCATIONAL_DETAILS"
+            WHERE "ICHR" = ?
           GROUP BY "PSID"
           HAVING COUNT(DISTINCT "STATUS") = 1
-        )
-        SELECT 
-          u."PSID", 
-          u."STATUS", 
-          e."CUST_QUALIFICATION_TYPE", 
-          e."ICHR",
-          e."NAME",
-          e."IC",
-          e."MODIFIEDAT"
-        FROM uniform u
-        LEFT JOIN ${table} e 
-          ON e."PSID" = u."PSID"
-         AND e."ICHR" = ?
-         AND e."CUST_QUALIFICATION_TYPE" = 'Q01'
-      `;
+          ),
+          first_record AS (
+            SELECT *
+            FROM (
+              SELECT 
+                e.*,
+                ROW_NUMBER() OVER (PARTITION BY e."PSID" ORDER BY e."MODIFIEDAT" ASC) AS rn
+              FROM "COM_LT_EDUCATION_EDUCATIONAL_DETAILS" e
+              WHERE e."ICHR" = ?
+            ) sub
+            WHERE sub.rn = 1
+          )
+          SELECT 
+            u."PSID",
+            u."STATUS",
+            f."ICHR",
+            f."NAME",
+            f."IC",
+            f."MODIFIEDAT"
+          FROM uniform u
+          LEFT JOIN first_record f
+            ON f."PSID" = u."PSID"
+                `;
 
       // Execute query — HANA handles all grouping + join logic
       const rows = await db.run(sql, [ichr, ichr]);
 
       // 2️⃣ Aggregate results in Node (minimal post-processing)
       const result = {
-        PA: { count: 0, q01Records: [] },
-        A: { count: 0, q01Records: [] },
-        R: { count: 0, q01Records: [] },
-        D: { count: 0, q01Records: [] },
-        SA: { count: 0, q01Records: [] }
+        PA: { count: 0, singleRecords: [] },
+        A: { count: 0, singleRecords: [] },
+        R: { count: 0, singleRecords: [] },
+        D: { count: 0, singleRecords: [] },
+        SA: { count: 0, singleRecords: [] }
       };
 
       for (const row of rows) {
         const status = row.STATUS;
         if (result[status]) {
           result[status].count++;
-          if (row.CUST_QUALIFICATION_TYPE === "Q01") {
-            result[status].q01Records.push({
-              psid: row.PSID,
-              status: row.STATUS,
-              name: row.NAME,
-              ic: row.IC,
-              modifiedAt: row.MODIFIEDAT
-            });
-          }
+          result[status].singleRecords.push({
+            psid: row.PSID,
+            status: row.STATUS,
+            name: row.NAME,
+            ic: row.IC,
+            modifiedAt: row.MODIFIEDAT,
+            ichr: row.ICHR
+          });
         }
       }
 
@@ -751,7 +759,7 @@ module.exports = cds.service.impl(async function () {
       return req.error(500, `Internal Server Error: ${error.message}`);
     }
   });
-                    
+
 });
 
 // using below code I am able to get each PSID group count along with one PSID record on Status
@@ -787,7 +795,7 @@ module.exports = cds.service.impl(async function () {
 
   // Prepare result: count and Q01 records
   let count = 0;
-  let q01Records = [];
+  let singleRecords = [];
   Object.values(psidGroups).forEach(records => {
     const uniqueStatuses = [...new Set(records.map(r => r.status))];
     if (uniqueStatuses.length === 1 && uniqueStatuses[0] === status) {
@@ -795,14 +803,14 @@ module.exports = cds.service.impl(async function () {
       // Find the record with cust_Qualification_Type === "Q01"
       const q01 = records.find(r => r.cust_Qualification_Type === "Q01");
       if (q01) {
-        q01Records.push(q01);
+        singleRecords.push(q01);
         console.log("Q01:"+q01)
       }
     }
   });
   console.log("count:" +count)
 
-  return { count, q01Records };
+  return { count, singleRecords };
 }); */
 
 /*this.on('getUniformStatusPsids', async req => {
@@ -827,7 +835,7 @@ module.exports = cds.service.impl(async function () {
 
       // Count PSIDs where all statuses are the same and match the requested status
       let count = 0;
-      let q01Records = [];
+      let singleRecords = [];
       Object.values(psidGroups).forEach(records => {
         const uniqueStatuses = [...new Set(records.map(r => r.status))];
         if (uniqueStatuses.length === 1 && uniqueStatuses[0] === status) {
@@ -835,12 +843,12 @@ module.exports = cds.service.impl(async function () {
 
           const q01 = records.find(r => r.cust_Qualification_Type === "Q01");
           if (q01) {
-            q01Records.push(q01);
+            singleRecords.push(q01);
           }
         }
       });
       console.log("count:" + count)
-      return { count, q01Records };
+      return { count, singleRecords };
 
     } catch (error) {
       console.error("Error in getUniformStatusPsids:", error);

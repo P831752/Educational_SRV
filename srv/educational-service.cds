@@ -17,7 +17,7 @@ service EducationalService {
 
   type StatusResult {
     count      : Integer;
-    q01Records : many Q01Record;
+    singleRecords : many singleRecord;
   };
 
   // Action returning all statuses
@@ -71,7 +71,7 @@ service EducationalService {
   };
 }
 
-type Q01Record {
+type singleRecord {
   PSID                    : String;
   status                  : String;
   cust_Qualification_Type : String;
