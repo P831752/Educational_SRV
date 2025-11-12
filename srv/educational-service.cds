@@ -7,16 +7,21 @@ service EducationalService {
   entity SFData              as projection on my.SFData;
   entity SH_Institutes       as projection on my.SH_Institutes;
 
-  action SH_InstitutesHANA(externalCode: String)             returns array of String;
-  action createInDetailsTable(psid: String)                  returns String;
+  action SH_InstitutesHANA(externalCode: String)                returns array of String;
 
-  action updateSFData(data: array of SFData)                 returns {
+  action createInDetailsTable(psid: String,
+                              name: String,
+                              ic: String,
+                              ichr: String)                     returns String;
+
+
+  action updateSFData(data: array of SFData)                    returns {
     created : Integer;
     updated : Integer;
   };
 
   type StatusResult {
-    count      : Integer;
+    count         : Integer;
     singleRecords : many singleRecord;
   };
 
@@ -26,22 +31,22 @@ service EducationalService {
     A  : StatusResult;
     R  : StatusResult;
     D  : StatusResult;
-    SA  : StatusResult;
+    SA : StatusResult;
   };
 
-  action getAllUniformStatusCounts(ichr: String)             returns {
+  action getAllUniformStatusCounts(ichr: String)                returns {
     PA : StatusResult;
     A  : StatusResult;
     R  : StatusResult;
   };
 
-  action getUniformStatusPsids(ichr: String, status: String) returns {
+  action getUniformStatusPsids(ichr: String, status: String)    returns {
     PA : StatusResult;
     A  : StatusResult;
     R  : StatusResult;
   };
 
-    action getUniformStatusPsidsNew(ichr: String, status: String) returns {
+  action getUniformStatusPsidsNew(ichr: String, status: String) returns {
     PA : StatusResult;
     A  : StatusResult;
     R  : StatusResult;
@@ -53,19 +58,19 @@ service EducationalService {
                    to: String,
                    cc: String,
                    subject: String,
-                   html: String)                             returns {
+                   html: String)                                returns {
     success   : Boolean;
     messageId : String;
     error     : String;
   };
 
-  action getInDraftPSIDs()                                   returns {
+  action getInDraftPSIDs()                                      returns {
     success        : Boolean;
     eduCount       : Integer;
     sfCount        : Integer;
     inDraftCount   : Integer;
     inDraftRecords : array of {
-      psid : String;
+      psid       : String;
       modifiedAt : String;
     };
   };

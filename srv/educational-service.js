@@ -550,7 +550,7 @@ module.exports = cds.service.impl(async function () {
   this.on('createInDetailsTable', async (req) => {
 
     try {
-      const { psid } = req.data;
+      const { psid, name, ic, ichr } = req.data;
       const tx = cds.transaction(req);
 
       // Step 1: Fetch entries from SFData with given psid
@@ -602,10 +602,10 @@ module.exports = cds.service.impl(async function () {
         ParentLegacy_effectiveStartDate: entry.ParentLegacy_effectiveStartDate,
 
         // Additional fields in Educational_Details
-        name: '', // default or derived value
+        name: name, // default or derived value
         comments: '',
-        ic: '',
-        ichr: '',
+        ic: ic,
+        ichr: ichr,
         newfilename: '',
         status: 'SA',
         isnewcourse: '',
